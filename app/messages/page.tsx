@@ -72,7 +72,15 @@ function ThreadView({
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const currentUserInitials = currentUserName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
+  }, [reply]);
   const otherName = currentUserId === conv.advisorId ? conv.studentName : conv.advisorName;
 
   useEffect(() => {
@@ -109,8 +117,8 @@ function ThreadView({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3 bg-card">
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="shrink-0 flex items-center gap-3 border-b border-border px-4 py-3 bg-card">
         <button
           onClick={onBack}
           className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition-colors lg:hidden"
@@ -131,7 +139,7 @@ function ThreadView({
         </ButtonLink>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {conv.messages.map(m => (
           <MessageBubble
             key={m.id}
@@ -143,19 +151,21 @@ function ThreadView({
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-border p-3">
-        <form onSubmit={handleSend} className="flex gap-2">
+      <div className="shrink-0 border-t border-border p-3">
+        <form onSubmit={handleSend} className="flex items-end gap-2">
           <textarea
-            rows={2}
+            ref={textareaRef}
+            rows={1}
             placeholder={`Reply to ${otherName}…`}
             value={reply}
             onChange={e => setReply(e.target.value)}
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(e); }
             }}
-            className="flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex-1 resize-none overflow-y-auto rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            style={{ maxHeight: '160px' }}
           />
-          <Button type="submit" size="sm" className="self-end shrink-0" disabled={!reply.trim() || sending}>
+          <Button type="submit" size="sm" className="shrink-0" disabled={!reply.trim() || sending}>
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </form>
@@ -207,8 +217,8 @@ export default function MessagesPage() {
   }
 
   return (
-    <div>
-      <div className="border-b border-border bg-muted/30 px-4 py-8 sm:px-6">
+    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 57px)' }}>
+      <div className="shrink-0 border-b border-border bg-muted/30 px-4 py-5 sm:px-6">
         <div className="mx-auto max-w-5xl">
           <h1 className="text-2xl font-bold">Messages</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -233,14 +243,11 @@ export default function MessagesPage() {
           <ButtonLink href="/advisors">Browse advisors</ButtonLink>
         </div>
       ) : (
-        <div className="mx-auto max-w-5xl">
-          <div
-            className="grid lg:grid-cols-[320px_1fr] border-b border-border"
-            style={{ height: 'calc(100vh - 220px)' }}
-          >
+        <div className="flex-1 min-h-0 mx-auto w-full max-w-5xl">
+          <div className="grid lg:grid-cols-[320px_1fr] h-full border-b border-border">
             {/* Conversation list */}
             <div className={cn(
-              'overflow-y-auto border-r border-border',
+              'h-full overflow-y-auto border-r border-border',
               selectedConv ? 'hidden lg:block' : 'block',
             )}>
               {conversations.map(conv => {
@@ -283,7 +290,7 @@ export default function MessagesPage() {
             </div>
 
             {/* Thread panel */}
-            <div className={cn(selectedConv ? 'block' : 'hidden lg:block')}>
+            <div className={cn('min-h-0 flex flex-col', selectedConv ? 'flex' : 'hidden lg:flex')}>
               {selectedConv ? (
                 <ThreadView
                   conv={selectedConv}
